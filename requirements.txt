@@ -1,0 +1,12 @@
+# Core training stack.
+stable-baselines3>=2.3
+
+# Optional analysis plot generation used by training/analyze_tuning.py.
+matplotlib>=3.8
+
+# Presentation-ready coaching evidence cards.
+Pillow>=10
+
+# Local Godot RL Agents Python package for StableBaselinesGodotEnv.
+# This matches the current workspace layout.
+-e ../godot_rl_agents

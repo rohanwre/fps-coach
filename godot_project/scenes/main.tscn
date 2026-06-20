@@ -1,0 +1,400 @@
+[gd_scene load_steps=35 format=3]
+
+[ext_resource type="Script" path="res://scripts/Game.gd" id="1_game"]
+[ext_resource type="Script" path="res://scripts/GameplayLogWriter.gd" id="2_logger"]
+[ext_resource type="Script" path="res://scripts/PlayerController.gd" id="3_player"]
+[ext_resource type="Script" path="res://scripts/Health.gd" id="4_health"]
+[ext_resource type="Script" path="res://scripts/RaycastWeapon.gd" id="5_weapon"]
+[ext_resource type="Script" path="res://scripts/EnemyController.gd" id="6_enemy"]
+[ext_resource type="Script" path="res://scripts/EnemyAIController3D.gd" id="7_enemy_ai"]
+[ext_resource type="Script" path="res://addons/godot_rl_agents/sync.gd" id="8_sync"]
+[ext_resource type="Script" path="res://scripts/PlayerFrameCapture.gd" id="9_frame_capture"]
+[ext_resource type="Script" path="res://scripts/CombatHUD.gd" id="10_combat_hud"]
+[ext_resource type="Script" path="res://scripts/PlayerAIController3D.gd" id="11_player_ai"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_floor"]
+size = Vector3(24, 1, 24)
+
+[sub_resource type="StandardMaterial3D" id="Mat_floor"]
+albedo_color = Color(0.18, 0.19, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_floor"]
+size = Vector3(24, 1, 24)
+material = SubResource("Mat_floor")
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall_x"]
+size = Vector3(24, 4, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall_z"]
+size = Vector3(1, 4, 24)
+
+[sub_resource type="StandardMaterial3D" id="Mat_wall"]
+albedo_color = Color(0.32, 0.34, 0.36, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_wall_x"]
+size = Vector3(24, 4, 1)
+material = SubResource("Mat_wall")
+
+[sub_resource type="BoxMesh" id="Mesh_wall_z"]
+size = Vector3(1, 4, 24)
+material = SubResource("Mat_wall")
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_agent"]
+radius = 0.35
+height = 1.4
+
+[sub_resource type="StandardMaterial3D" id="Mat_player"]
+albedo_color = Color(0.15, 0.45, 0.95, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_enemy"]
+albedo_color = Color(0.95, 0.25, 0.2, 1)
+
+[sub_resource type="CapsuleMesh" id="Mesh_player"]
+radius = 0.35
+height = 1.4
+material = SubResource("Mat_player")
+
+[sub_resource type="CapsuleMesh" id="Mesh_enemy"]
+radius = 0.35
+height = 1.4
+material = SubResource("Mat_enemy")
+
+[sub_resource type="StandardMaterial3D" id="Mat_player_gun"]
+albedo_color = Color(0.08, 0.09, 0.1, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_enemy_gun"]
+albedo_color = Color(0.12, 0.02, 0.02, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_player_flash"]
+albedo_color = Color(1, 0.9, 0.2, 1)
+emission_enabled = true
+emission = Color(1, 0.75, 0.12, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_enemy_flash"]
+albedo_color = Color(1, 0.15, 0.08, 1)
+emission_enabled = true
+emission = Color(1, 0.05, 0.02, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_gun"]
+size = Vector3(0.12, 0.1, 0.55)
+
+[sub_resource type="BoxMesh" id="Mesh_flash"]
+size = Vector3(0.18, 0.18, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="Mat_cover"]
+albedo_color = Color(0.12, 0.38, 0.32, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape_cover_wall"]
+size = Vector3(1.2, 2.8, 7)
+
+[sub_resource type="BoxMesh" id="Mesh_cover_wall"]
+size = Vector3(1.2, 2.8, 7)
+material = SubResource("Mat_cover")
+
+[sub_resource type="BoxShape3D" id="BoxShape_cover_block"]
+size = Vector3(2.8, 2.4, 2.8)
+
+[sub_resource type="BoxMesh" id="Mesh_cover_block"]
+size = Vector3(2.8, 2.4, 2.8)
+material = SubResource("Mat_cover")
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_game")
+player_path = NodePath("Player")
+enemy_path = NodePath("Enemy")
+gameplay_log_writer_path = NodePath("GameplayLogWriter")
+player_frame_capture_path = NodePath("PlayerFrameCapture")
+
+[node name="GameplayLogWriter" type="Node" parent="."]
+script = ExtResource("2_logger")
+
+[node name="PlayerFrameCapture" type="Node" parent="."]
+script = ExtResource("9_frame_capture")
+gameplay_log_writer_path = NodePath("../GameplayLogWriter")
+
+[node name="CombatHUD" type="CanvasLayer" parent="."]
+layer = 120
+script = ExtResource("10_combat_hud")
+player_health_path = NodePath("../Player/Health")
+enemy_health_path = NodePath("../Enemy/Health")
+player_fill_path = NodePath("PlayerBar/Fill")
+enemy_fill_path = NodePath("EnemyBar/Fill")
+player_label_path = NodePath("PlayerBar/Label")
+enemy_label_path = NodePath("EnemyBar/Label")
+
+[node name="PlayerBar" type="ColorRect" parent="CombatHUD"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 292.0
+offset_bottom = 66.0
+mouse_filter = 2
+color = Color(0.04, 0.05, 0.06, 0.92)
+
+[node name="Fill" type="ColorRect" parent="CombatHUD/PlayerBar"]
+offset_left = 4.0
+offset_top = 20.0
+offset_right = 264.0
+offset_bottom = 38.0
+mouse_filter = 2
+color = Color(0.12, 0.55, 0.95, 1)
+
+[node name="Label" type="Label" parent="CombatHUD/PlayerBar"]
+offset_left = 6.0
+offset_top = 1.0
+offset_right = 258.0
+offset_bottom = 21.0
+theme_override_font_sizes/font_size = 16
+text = "PLAYER  100 / 100"
+
+[node name="EnemyBar" type="ColorRect" parent="CombatHUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -292.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 66.0
+grow_horizontal = 0
+mouse_filter = 2
+color = Color(0.04, 0.05, 0.06, 0.92)
+
+[node name="Fill" type="ColorRect" parent="CombatHUD/EnemyBar"]
+offset_left = 4.0
+offset_top = 20.0
+offset_right = 264.0
+offset_bottom = 38.0
+mouse_filter = 2
+color = Color(0.95, 0.22, 0.18, 1)
+
+[node name="Label" type="Label" parent="CombatHUD/EnemyBar"]
+offset_left = 6.0
+offset_top = 1.0
+offset_right = 258.0
+offset_bottom = 21.0
+theme_override_font_sizes/font_size = 16
+text = "ENEMY  100 / 100"
+horizontal_alignment = 2
+
+[node name="CrosshairUI" type="CanvasLayer" parent="."]
+layer = 128
+
+[node name="Horizontal" type="ColorRect" parent="CrosshairUI"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -10.0
+offset_top = -1.5
+offset_right = 10.0
+offset_bottom = 1.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 0.95, 0.2, 0.95)
+
+[node name="Vertical" type="ColorRect" parent="CrosshairUI"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -1.5
+offset_top = -10.0
+offset_right = 1.5
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 0.95, 0.2, 0.95)
+
+[node name="Sync" type="Node" parent="."]
+script = ExtResource("8_sync")
+action_repeat = 4
+speed_up = 1.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.707107, -0.353553, 0.612372, 0, 0.866025, 0.5, -0.707107, -0.353553, 0.612372, 0, 8, 0)
+light_energy = 2.0
+
+[node name="Arena" type="Node3D" parent="."]
+
+[node name="Floor" type="StaticBody3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/Floor"]
+shape = SubResource("BoxShape_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/Floor"]
+mesh = SubResource("Mesh_floor")
+
+[node name="NorthWall" type="StaticBody3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -12)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/NorthWall"]
+shape = SubResource("BoxShape_wall_x")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/NorthWall"]
+mesh = SubResource("Mesh_wall_x")
+
+[node name="SouthWall" type="StaticBody3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 12)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/SouthWall"]
+shape = SubResource("BoxShape_wall_x")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/SouthWall"]
+mesh = SubResource("Mesh_wall_x")
+
+[node name="WestWall" type="StaticBody3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/WestWall"]
+shape = SubResource("BoxShape_wall_z")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/WestWall"]
+mesh = SubResource("Mesh_wall_z")
+
+[node name="EastWall" type="StaticBody3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/EastWall"]
+shape = SubResource("BoxShape_wall_z")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/EastWall"]
+mesh = SubResource("Mesh_wall_z")
+
+[node name="CenterCoverWall" type="StaticBody3D" parent="Arena" groups=["cover"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/CenterCoverWall"]
+shape = SubResource("BoxShape_cover_wall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/CenterCoverWall"]
+mesh = SubResource("Mesh_cover_wall")
+
+[node name="NorthCoverBlock" type="StaticBody3D" parent="Arena" groups=["cover"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 0.7, -6.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/NorthCoverBlock"]
+shape = SubResource("BoxShape_cover_block")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/NorthCoverBlock"]
+mesh = SubResource("Mesh_cover_block")
+
+[node name="SouthCoverBlock" type="StaticBody3D" parent="Arena" groups=["cover"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.7, 6.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/SouthCoverBlock"]
+shape = SubResource("BoxShape_cover_block")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/SouthCoverBlock"]
+mesh = SubResource("Mesh_cover_block")
+
+[node name="Player" type="CharacterBody3D" parent="." groups=["actors"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1, 0)
+script = ExtResource("3_player")
+health_path = NodePath("Health")
+weapon_path = NodePath("Camera3D/Weapon")
+camera_path = NodePath("Camera3D")
+target_path = NodePath("../Enemy")
+ai_controller_path = NodePath("PlayerAIController3D")
+model_aim_height = 0.0
+model_auto_fire_enabled = true
+model_auto_fire_reaction_delay_seconds = 0.25
+model_auto_fire_alignment_threshold = 0.985
+scripted_profile = "human"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+shape = SubResource("CapsuleShape_agent")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Player"]
+mesh = SubResource("Mesh_player")
+
+[node name="Health" type="Node" parent="Player"]
+script = ExtResource("4_health")
+max_health = 100
+
+[node name="Camera3D" type="Camera3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, -0.05)
+current = true
+
+[node name="Weapon" type="Node3D" parent="Player/Camera3D"]
+script = ExtResource("5_weapon")
+owner_id = "player"
+damage = 34
+max_range = 50.0
+cooldown_seconds = 0.18
+tracer_color = Color(1, 0.9, 0.2, 1)
+
+[node name="PlayerAIController3D" type="Node3D" parent="Player"]
+script = ExtResource("11_player_ai")
+control_mode = 1
+player_path = NodePath("..")
+target_path = NodePath("../../Enemy")
+game_path = NodePath("../..")
+max_episode_steps = 900
+
+[node name="GunMesh" type="MeshInstance3D" parent="Player/Camera3D/Weapon"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.28, -0.22, -0.45)
+mesh = SubResource("Mesh_gun")
+surface_material_override/0 = SubResource("Mat_player_gun")
+
+[node name="Muzzle" type="Marker3D" parent="Player/Camera3D/Weapon"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.28, -0.22, -0.76)
+
+[node name="MuzzleFlash" type="MeshInstance3D" parent="Player/Camera3D/Weapon"]
+visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.28, -0.22, -0.82)
+mesh = SubResource("Mesh_flash")
+surface_material_override/0 = SubResource("Mat_player_flash")
+
+[node name="Enemy" type="CharacterBody3D" parent="." groups=["actors"]]
+transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 4, 1, 0)
+script = ExtResource("6_enemy")
+health_path = NodePath("Health")
+weapon_path = NodePath("Weapon")
+target_path = NodePath("../Player")
+ai_controller_path = NodePath("EnemyAIController3D")
+model_difficulty_profile = "adaptive"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Enemy"]
+shape = SubResource("CapsuleShape_agent")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Enemy"]
+mesh = SubResource("Mesh_enemy")
+
+[node name="Health" type="Node" parent="Enemy"]
+script = ExtResource("4_health")
+max_health = 100
+
+[node name="Weapon" type="Node3D" parent="Enemy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, -0.4)
+script = ExtResource("5_weapon")
+owner_id = "enemy"
+damage = 50
+max_range = 35.0
+cooldown_seconds = 0.25
+tracer_color = Color(1, 0.12, 0.05, 1)
+
+[node name="GunMesh" type="MeshInstance3D" parent="Enemy/Weapon"]
+mesh = SubResource("Mesh_gun")
+surface_material_override/0 = SubResource("Mat_enemy_gun")
+
+[node name="Muzzle" type="Marker3D" parent="Enemy/Weapon"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.35)
+
+[node name="MuzzleFlash" type="MeshInstance3D" parent="Enemy/Weapon"]
+visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.45)
+mesh = SubResource("Mesh_flash")
+surface_material_override/0 = SubResource("Mat_enemy_flash")
+
+[node name="EnemyAIController3D" type="Node3D" parent="Enemy"]
+script = ExtResource("7_enemy_ai")
+enemy_path = NodePath("..")
+target_path = NodePath("../../Player")
+game_path = NodePath("../..")
+max_episode_steps = 900
